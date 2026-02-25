@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CounterDash | Character Lab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">COUNTER<span>DASH</span></div>
+        <div class="search-container">
+            <input type="text" id="charSearch" placeholder="Search character (e.g. Beerus, Sol, Ken)...">
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Stop Guessing. Start Countering.</h1>
+        <p>Select a character to deconstruct their "unbeatable" moves.</p>
+    </header>
+
+    <main class="container">
+        <div class="character-grid" id="characterGrid">
+            </div>
+
+        <div id="counterModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <div id="modalBody">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
