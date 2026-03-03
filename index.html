@@ -5,33 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CounterDash | Character Lab</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <nav class="navbar">
         <div class="logo">COUNTER<span>DASH</span></div>
         <div class="search-container">
-            <input type="text" id="charSearch" placeholder="Search character (e.g. Beerus, Sol, Ken)...">
+            <input type="text" id="charSearch" placeholder="Search character (e.g. Beerus, Ken)...">
+        </div>
+        <div class="auth-section">
+            <span id="userEmail" class="user-label"></span>
+            <button id="authTriggerBtn" class="btn-primary" onclick="openAuth()">Sign In / Up</button>
         </div>
     </nav>
 
     <header class="hero">
-        <h1>Stop Guessing. Start Countering.</h1>
-        <p>Select a character to deconstruct their "unbeatable" moves.</p>
+        <h1>Master the Matchup</h1>
+        <p>Expert-level counterplay data for fighting game enthusiasts.</p>
     </header>
 
-    <main class="container">
-        <div class="character-grid" id="characterGrid">
+    <main class="content-wrapper">
+        <div class="character-grid" id="charGrid">
             </div>
-
-        <div id="counterModal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn">&times;</span>
-                <div id="modalBody">
-                    </div>
-            </div>
-        </div>
     </main>
+
+    <div id="strategyModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-icon" onclick="closeAllModals()">&times;</span>
+            <div id="strategyContent"></div>
+        </div>
+    </div>
+
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-card auth-box">
+            <span class="close-icon" onclick="closeAllModals()">&times;</span>
+            <h2 id="authHeader">Welcome to the Lab</h2>
+            <p>Enter your details to sync your counter-data.</p>
+            
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="emailInput" placeholder="challenger@example.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="passInput" placeholder="••••••••">
+            </div>
+            
+            <div class="auth-actions">
+                <button onclick="handleSignUp()" class="btn-accent">Sign Up</button>
+                <button onclick="handleSignIn()" class="btn-outline">Sign In</button>
+            </div>
+            <p id="statusMsg" class="status-text"></p>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
