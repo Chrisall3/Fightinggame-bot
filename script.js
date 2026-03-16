@@ -1,5 +1,5 @@
 // 1. PROJECT CONFIGURATION
-const SUPABASE_URL = 'https://sljahouozlurhvndrmjk.supabase.co'; // REPLACE WITH YOUR URL
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; // REPLACE WITH YOUR URL
 const SUPABASE_KEY = 'sb_publishable_ctE74i6vEzCys2K7bTvttA_6iZ9XD3Y';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
