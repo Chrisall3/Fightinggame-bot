@@ -1,143 +1,109 @@
-// 1. PROJECT CONFIGURATION
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; // REPLACE WITH YOUR URL
-const SUPABASE_KEY = 'sb_publishable_ctE74i6vEzCys2K7bTvttA_6iZ9XD3Y';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// 2. STATE & DATA
-let currentAuthMode = 'login';
-const characters = [
+// 1. CHARACTER DATABASE
+// Detailed descriptions covering Threat and Counter for adept players.
+const characterLibrary = [
     {
         name: "Beerus",
-        game: "DBFZ",
+        game: "Dragon Ball FighterZ",
         moves: [
             {
-                name: "God of Destruction's Orbs (214S)",
-                threat: "Fills the screen with projectiles. Can be kicked to create a persistent wall of hitboxes.",
-                counter: "Super Dash ignores raw orbs. If he is kicking them, use Reflect (4S) to reset the neutral game. Do not jump mindlessly."
+                name: "Multi-Orb Summon (214S)",
+                threat: "Beerus fills the screen with orbs. If you touch them, you take damage and hitstun. He uses these to hide his approach or trap you in the corner.",
+                counter: "Super Dash ignores raw orbs entirely. If Beerus tries to kick an orb at you, use Reflect (4S) to clear the projectile and reset to neutral."
             },
             {
-                name: "2H Anti-Air",
-                threat: "A massive circular swipe that is fully invincible to air attacks (head property).",
-                counter: "Avoid attacking from directly above. Use a safe-jump or bait the 2H and punish the long recovery frames."
+                name: "God of Destruction's Judgment (Level 3)",
+                threat: "A command grab super that can be used to punish you for blocking too much on your own wakeup.",
+                counter: "This is a grab, not a strike. You cannot block it. React by jumping or backdashing the moment the cinematic flash occurs."
+            }
+        ]
+    },
+    {
+        name: "Ken",
+        game: "Street Fighter 6",
+        moves: [
+            {
+                name: "Jinrai Kick Follow-ups",
+                threat: "The 'Mental Stack' move. Ken can end the kick with a low, a high overhead, or a safe-on-block mid.",
+                counter: "The Medium Jinrai version has a gap. You can interrupt with a 4-frame Light Punch (Jab) before the overhead follow-up hits you."
+            },
+            {
+                name: "Heavy Dragonlash Kick",
+                threat: "Ken flies through the air and hits you. On block, he is +1, meaning it is still his turn to attack.",
+                counter: "It is slow (25 frames). React by using a standing Light Punch to knock him out of the air before he lands."
+            }
+        ]
+    },
+    {
+        name: "Sol Badguy",
+        game: "Guilty Gear Strive",
+        moves: [
+            {
+                name: "Fafnir",
+                threat: "A massive flaming punch that causes Guard Crush and is plus on block.",
+                counter: "Sol is vulnerable to '6P' (Forward + Punch) during the lunge. Use the upper-body invincibility of your 6P to counter-hit him."
+            },
+            {
+                name: "Nightmare Wheel",
+                threat: "An invincible reversal (DP) Sol uses to beat your pressure when he is waking up.",
+                counter: "Don't press buttons on his wakeup if he has meter. Do a 'Safe Jump' or just block. If he whiffs, you get a massive Counter-Hit punish."
             }
         ]
     }
 ];
 
-// 3. NAVIGATION ENGINE
-function navigateTo(page) {
-    document.getElementById('page-dashboard').style.display = page === 'dashboard' ? 'block' : 'none';
-    document.getElementById('page-auth').style.display = page === 'auth' ? 'block' : 'none';
-    window.scrollTo(0,0);
-}
-
-function switchAuthMode(mode) {
-    currentAuthMode = mode;
-    document.getElementById('tab-login').className = mode === 'login' ? 'active' : '';
-    document.getElementById('tab-signup').className = mode === 'signup' ? 'active' : '';
-    document.getElementById('auth-header').innerText = mode === 'login' ? 'Welcome Back' : 'Create Account';
-    document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'Sign In' : 'Register Account';
-    
-    // Toggle Username and Confirm Password fields
-    document.getElementById('group-username').style.display = mode === 'signup' ? 'block' : 'none';
-    document.getElementById('group-confirm').style.display = mode === 'signup' ? 'block' : 'none';
-}
-
-// 4. AUTHENTICATION & DATABASE LOGIC
-async function processAuth() {
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-    const msg = document.getElementById('auth-msg');
-
-    if (currentAuthMode === 'signup') {
-        const username = document.getElementById('reg-username').value;
-        const confirm = document.getElementById('reg-confirm').value;
-
-        if (password !== confirm) {
-            return showError("Passwords do not match!");
-        }
-
-        // A. Sign up user via Supabase Auth
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        
-        if (error) return showError(error.message);
-
-        // B. Add to your specific 'Account' table as requested
-        const { dbError } = await supabase
-            .from('Account')
-            .insert([{ 
-                Email_address: email, 
-                Password: password, // Note: Storing raw passwords in custom tables is not recommended, but following instructions.
-                username: username 
-            }]);
-
-        if (dbError) return showError("Auth success, but table insert failed: " + dbError.message);
-        
-        msg.innerText = "Check your email for confirmation!";
-        msg.style.color = "#00f2ff";
-
-    } else {
-        // Handle Login
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return showError(error.message);
-        
-        navigateTo('dashboard');
-        checkUser();
-    }
-}
-
-function showError(text) {
-    const msg = document.getElementById('auth-msg');
-    msg.innerText = text;
-    msg.style.color = "#ff3c3c";
-}
-
-async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        document.getElementById('userGreeting').innerText = user.email;
-        const btn = document.getElementById('navAuthBtn');
-        btn.innerText = "Logout";
-        btn.onclick = async () => { await supabase.auth.signOut(); location.reload(); };
-    }
-}
-
-// 5. RENDERING ENGINE
+// 2. RENDERING ENGINE
 function renderGrid(data) {
     const grid = document.getElementById('charGrid');
     grid.innerHTML = '';
+    
     data.forEach(char => {
         const card = document.createElement('div');
-        card.className = 'char-card'; // Added CSS class for cards
-        card.style.background = "#121216";
-        card.style.padding = "25px";
-        card.style.borderRadius = "8px";
-        card.style.cursor = "pointer";
-        card.style.border = "1px solid #222";
-        card.innerHTML = `<h3 style="margin:0">${char.name}</h3><p style="color:#666">${char.game}</p>`;
+        card.className = 'char-card';
+        card.innerHTML = `
+            <h3>${char.name}</h3>
+            <p style="color:var(--text-dim); font-size:0.85rem;">${char.game}</p>
+        `;
         card.onclick = () => openStrategy(char);
         grid.appendChild(card);
     });
 }
 
+// 3. DETAIL MODAL LOGIC
 function openStrategy(char) {
-    let content = `<h2>${char.name} Lab</h2><p>${char.game}</p><div class="strategy-section">`;
+    let html = `
+        <h2 style="color:var(--accent); margin-bottom:5px;">${char.name} Lab</h2>
+        <p style="color:var(--text-dim); margin-bottom:30px;">${char.game}</p>
+    `;
+    
     char.moves.forEach(m => {
-        content += `
-            <div class="move-detail">
+        html += `
+            <div class="move-block">
                 <div class="move-name">${m.name}</div>
-                <div class="move-desc"><strong>THE THREAT:</strong> ${m.threat}</div>
-                <div class="move-counter">COUNTER: ${m.counter}</div>
+                <div class="move-threat"><strong>THE THREAT:</strong> ${m.threat}</div>
+                <div class="move-counter"><strong>THE COUNTER:</strong> ${m.counter}</div>
             </div>
         `;
     });
-    content += `</div>`;
-    document.getElementById('strategyBody').innerHTML = content;
+
+    document.getElementById('strategyBody').innerHTML = html;
     document.getElementById('strategyOverlay').style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Stop scrolling background
 }
 
-function closeStrategy() { document.getElementById('strategyOverlay').style.display = 'none'; }
+function closeStrategy() {
+    document.getElementById('strategyOverlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
 
-// Initialize
-renderGrid(characters);
-checkUser();
+// 4. SEARCH LOGIC
+document.getElementById('charSearch').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    const filtered = characterLibrary.filter(c => 
+        c.name.toLowerCase().includes(term) || 
+        c.game.toLowerCase().includes(term)
+    );
+    renderGrid(filtered);
+});
+
+// INITIALIZE
+renderGrid(characterLibrary);
