@@ -1,101 +1,143 @@
-// 1. PROJECT CREDENTIALS
-// Find your Project URL in: Settings -> API -> Project URL
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; 
+// 1. PROJECT CONFIGURATION
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; // REPLACE WITH YOUR URL
 const SUPABASE_KEY = 'sb_publishable_ctE74i6vEzCys2K7bTvttA_6iZ9XD3Y';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// 2. COUNTERPLAY DATA
+// 2. STATE & DATA
+let currentAuthMode = 'login';
 const characters = [
-    { id: 1, name: "Beerus", game: "DBFZ", strategy: "Super Dash ignores orbs. Punish orb-kick startup with fast assists." },
-    { id: 2, name: "Ken", game: "SF6", strategy: "Medium Jinrai has a 6-frame gap. Jab out of the follow-up." },
-    { id: 3, name: "Sol Badguy", game: "GGST", strategy: "6P beats Fafnir. Respect the DP on wake-up." }
+    {
+        name: "Beerus",
+        game: "DBFZ",
+        moves: [
+            {
+                name: "God of Destruction's Orbs (214S)",
+                threat: "Fills the screen with projectiles. Can be kicked to create a persistent wall of hitboxes.",
+                counter: "Super Dash ignores raw orbs. If he is kicking them, use Reflect (4S) to reset the neutral game. Do not jump mindlessly."
+            },
+            {
+                name: "2H Anti-Air",
+                threat: "A massive circular swipe that is fully invincible to air attacks (head property).",
+                counter: "Avoid attacking from directly above. Use a safe-jump or bait the 2H and punish the long recovery frames."
+            }
+        ]
+    }
 ];
 
-// 3. AUTHENTICATION LOGIC (Sign In / Sign Up)
-async function handleSignUp() {
-    const email = document.getElementById('emailInput').value;
-    const password = document.getElementById('passInput').value;
-    const status = document.getElementById('statusMsg');
-
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
-
-    if (error) {
-        status.innerText = error.message;
-        status.style.color = "#ff3c3c";
-    } else {
-        status.innerText = "Check email to confirm your account!";
-        status.style.color = "#00f2ff";
-    }
+// 3. NAVIGATION ENGINE
+function navigateTo(page) {
+    document.getElementById('page-dashboard').style.display = page === 'dashboard' ? 'block' : 'none';
+    document.getElementById('page-auth').style.display = page === 'auth' ? 'block' : 'none';
+    window.scrollTo(0,0);
 }
 
-async function handleSignIn() {
-    const email = document.getElementById('emailInput').value;
-    const password = document.getElementById('passInput').value;
-    const status = document.getElementById('statusMsg');
+function switchAuthMode(mode) {
+    currentAuthMode = mode;
+    document.getElementById('tab-login').className = mode === 'login' ? 'active' : '';
+    document.getElementById('tab-signup').className = mode === 'signup' ? 'active' : '';
+    document.getElementById('auth-header').innerText = mode === 'login' ? 'Welcome Back' : 'Create Account';
+    document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'Sign In' : 'Register Account';
+    
+    // Toggle Username and Confirm Password fields
+    document.getElementById('group-username').style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('group-confirm').style.display = mode === 'signup' ? 'block' : 'none';
+}
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+// 4. AUTHENTICATION & DATABASE LOGIC
+async function processAuth() {
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const msg = document.getElementById('auth-msg');
 
-    if (error) {
-        status.innerText = error.message;
-        status.style.color = "#ff3c3c";
+    if (currentAuthMode === 'signup') {
+        const username = document.getElementById('reg-username').value;
+        const confirm = document.getElementById('reg-confirm').value;
+
+        if (password !== confirm) {
+            return showError("Passwords do not match!");
+        }
+
+        // A. Sign up user via Supabase Auth
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        
+        if (error) return showError(error.message);
+
+        // B. Add to your specific 'Account' table as requested
+        const { dbError } = await supabase
+            .from('Account')
+            .insert([{ 
+                Email_address: email, 
+                Password: password, // Note: Storing raw passwords in custom tables is not recommended, but following instructions.
+                username: username 
+            }]);
+
+        if (dbError) return showError("Auth success, but table insert failed: " + dbError.message);
+        
+        msg.innerText = "Check your email for confirmation!";
+        msg.style.color = "#00f2ff";
+
     } else {
-        closeAllModals();
+        // Handle Login
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return showError(error.message);
+        
+        navigateTo('dashboard');
         checkUser();
     }
 }
 
-async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const triggerBtn = document.getElementById('authTriggerBtn');
-    const userLabel = document.getElementById('userEmail');
+function showError(text) {
+    const msg = document.getElementById('auth-msg');
+    msg.innerText = text;
+    msg.style.color = "#ff3c3c";
+}
 
+async function checkUser() {
+    const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        triggerBtn.innerText = "Log Out";
-        triggerBtn.onclick = handleSignOut;
-        userLabel.innerText = user.email;
+        document.getElementById('userGreeting').innerText = user.email;
+        const btn = document.getElementById('navAuthBtn');
+        btn.innerText = "Logout";
+        btn.onclick = async () => { await supabase.auth.signOut(); location.reload(); };
     }
 }
 
-async function handleSignOut() {
-    await supabaseClient.auth.signOut();
-    window.location.reload();
-}
-
-// 4. UI ENGINE logic
-function renderGrid(list) {
+// 5. RENDERING ENGINE
+function renderGrid(data) {
     const grid = document.getElementById('charGrid');
     grid.innerHTML = '';
-    list.forEach(char => {
+    data.forEach(char => {
         const card = document.createElement('div');
-        card.className = 'char-card';
-        card.innerHTML = `<h3>${char.name}</h3><p style="color:#666">${char.game}</p>`;
+        card.className = 'char-card'; // Added CSS class for cards
+        card.style.background = "#121216";
+        card.style.padding = "25px";
+        card.style.borderRadius = "8px";
+        card.style.cursor = "pointer";
+        card.style.border = "1px solid #222";
+        card.innerHTML = `<h3 style="margin:0">${char.name}</h3><p style="color:#666">${char.game}</p>`;
         card.onclick = () => openStrategy(char);
         grid.appendChild(card);
     });
 }
 
 function openStrategy(char) {
-    document.getElementById('strategyContent').innerHTML = `
-        <h2 style="color:#ff3c3c">${char.name} Counterplay</h2>
-        <p style="line-height:1.6; font-size:1.1rem;">${char.strategy}</p>
-    `;
-    document.getElementById('strategyModal').style.display = 'block';
+    let content = `<h2>${char.name} Lab</h2><p>${char.game}</p><div class="strategy-section">`;
+    char.moves.forEach(m => {
+        content += `
+            <div class="move-detail">
+                <div class="move-name">${m.name}</div>
+                <div class="move-desc"><strong>THE THREAT:</strong> ${m.threat}</div>
+                <div class="move-counter">COUNTER: ${m.counter}</div>
+            </div>
+        `;
+    });
+    content += `</div>`;
+    document.getElementById('strategyBody').innerHTML = content;
+    document.getElementById('strategyOverlay').style.display = 'block';
 }
 
-function openAuth() { document.getElementById('authModal').style.display = 'block'; }
-function closeAllModals() { 
-    document.getElementById('authModal').style.display = 'none'; 
-    document.getElementById('strategyModal').style.display = 'none'; 
-}
+function closeStrategy() { document.getElementById('strategyOverlay').style.display = 'none'; }
 
-// 5. SEARCH ENGINE
-document.getElementById('charSearch').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const filtered = characters.filter(c => c.name.toLowerCase().includes(term));
-    renderGrid(filtered);
-});
-
-// INITIALIZE
+// Initialize
 renderGrid(characters);
 checkUser();
