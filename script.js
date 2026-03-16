@@ -1,19 +1,17 @@
-// 1. CHARACTER DATABASE
-// Detailed descriptions covering Threat and Counter for adept players.
 const characterLibrary = [
     {
         name: "Beerus",
-        game: "Dragon Ball FighterZ",
+        game: "DBFZ",
         moves: [
             {
                 name: "Multi-Orb Summon (214S)",
-                threat: "Beerus fills the screen with orbs. If you touch them, you take damage and hitstun. He uses these to hide his approach or trap you in the corner.",
-                counter: "Super Dash ignores raw orbs entirely. If Beerus tries to kick an orb at you, use Reflect (4S) to clear the projectile and reset to neutral."
+                threat: "Fills the screen with projectiles. Can be kicked to track your position.",
+                counter: "Super Dash ignores raw orbs. If he kicks them, use Reflect (4S) to clear the space."
             },
             {
-                name: "God of Destruction's Judgment (Level 3)",
-                threat: "A command grab super that can be used to punish you for blocking too much on your own wakeup.",
-                counter: "This is a grab, not a strike. You cannot block it. React by jumping or backdashing the moment the cinematic flash occurs."
+                name: "2H Anti-Air",
+                threat: "Massive circular hitbox that is head-invincible.",
+                counter: "Avoid air-dashing directly at him. Stay grounded or use a projectile to force a block."
             }
         ]
     },
@@ -23,58 +21,83 @@ const characterLibrary = [
         moves: [
             {
                 name: "Jinrai Kick Follow-ups",
-                threat: "The 'Mental Stack' move. Ken can end the kick with a low, a high overhead, or a safe-on-block mid.",
-                counter: "The Medium Jinrai version has a gap. You can interrupt with a 4-frame Light Punch (Jab) before the overhead follow-up hits you."
+                threat: "A multi-hit guessing game between a low, overhead, and mid.",
+                counter: "The Medium version has a gap. You can interrupt with a 4-frame Light Punch before the follow-up hits."
             },
             {
                 name: "Heavy Dragonlash Kick",
-                threat: "Ken flies through the air and hits you. On block, he is +1, meaning it is still his turn to attack.",
-                counter: "It is slow (25 frames). React by using a standing Light Punch to knock him out of the air before he lands."
+                threat: "+1 on block, meaning it is Ken's turn if you block it.",
+                counter: "Long startup (25 frames). React by using a standing Light Punch to knock him out of the air."
             }
         ]
     },
     {
-        name: "Sol Badguy",
+        name: "Kazuya Mishima",
+        game: "Tekken 8",
+        moves: [
+            {
+                name: "Electric Wind God Fist (EWGF)",
+                threat: "Fast, high-damage launcher that is plus on block.",
+                counter: "High execution move. Most effective counter is Sidestep Left (SSL). If you block it, you are in minor disadvantage; don't press a slow button."
+            },
+            {
+                name: "Hellsweep (cd4,1)",
+                threat: "An unseeable low that leads to huge damage or a knockdown.",
+                counter: "Extremely linear. Sidestep Left (SSL) or Sidewalk Left beats it. If you block it, it's highly punishable; launch him for full damage."
+            }
+        ]
+    },
+    {
+        name: "JP",
+        game: "Street Fighter 6",
+        moves: [
+            {
+                name: "Departure (Portals)",
+                threat: "Sets up teleports or overhead/low projectiles from a distance.",
+                counter: "Use Drive Parry to handle the projectiles. If he teleports, he is vulnerable to a throw or a fast jab upon landing."
+            },
+            {
+                name: "OD Amnesia (Counter)",
+                threat: "A reversal that catches strikes and throws, dealing massive damage.",
+                counter: "On JP's wakeup, 'Shimmy' (walk backward) or jump to bait the counter. If he whiffs it, he loses two drive bars and is wide open."
+            }
+        ]
+    },
+    {
+        name: "Happy Chaos",
         game: "Guilty Gear Strive",
         moves: [
             {
-                name: "Fafnir",
-                threat: "A massive flaming punch that causes Guard Crush and is plus on block.",
-                counter: "Sol is vulnerable to '6P' (Forward + Punch) during the lunge. Use the upper-body invincibility of your 6P to counter-hit him."
+                name: "Steady Aim (Shooting)",
+                threat: "High-accuracy full-screen shots that can guard-crush indefinitely.",
+                counter: "Watch his Concentration (Blue bar). When it's low, he must reload or focus. That is your window to dash in and apply pressure."
             },
             {
-                name: "Nightmare Wheel",
-                threat: "An invincible reversal (DP) Sol uses to beat your pressure when he is waking up.",
-                counter: "Don't press buttons on his wakeup if he has meter. Do a 'Safe Jump' or just block. If he whiffs, you get a massive Counter-Hit punish."
+                name: "Deus Ex Machina (Overdrive)",
+                threat: "Full-screen cinematic super that catches movement.",
+                counter: "Cannot be used if his gun is away. If you see the flash, block immediately. It is minus on block if you are close enough to punish."
             }
         ]
     }
 ];
 
-// 2. RENDERING ENGINE
 function renderGrid(data) {
     const grid = document.getElementById('charGrid');
     grid.innerHTML = '';
-    
     data.forEach(char => {
         const card = document.createElement('div');
         card.className = 'char-card';
         card.innerHTML = `
             <h3>${char.name}</h3>
-            <p style="color:var(--text-dim); font-size:0.85rem;">${char.game}</p>
+            <div class="game-badge">${char.game}</div>
         `;
         card.onclick = () => openStrategy(char);
         grid.appendChild(card);
     });
 }
 
-// 3. DETAIL MODAL LOGIC
 function openStrategy(char) {
-    let html = `
-        <h2 style="color:var(--accent); margin-bottom:5px;">${char.name} Lab</h2>
-        <p style="color:var(--text-dim); margin-bottom:30px;">${char.game}</p>
-    `;
-    
+    let html = `<h2 style="color:var(--accent)">${char.name} Lab</h2><p style="color:var(--text-dim); margin-bottom:25px;">${char.game}</p>`;
     char.moves.forEach(m => {
         html += `
             <div class="move-block">
@@ -84,10 +107,9 @@ function openStrategy(char) {
             </div>
         `;
     });
-
     document.getElementById('strategyBody').innerHTML = html;
     document.getElementById('strategyOverlay').style.display = 'block';
-    document.body.style.overflow = 'hidden'; // Stop scrolling background
+    document.body.style.overflow = 'hidden';
 }
 
 function closeStrategy() {
@@ -95,15 +117,12 @@ function closeStrategy() {
     document.body.style.overflow = 'auto';
 }
 
-// 4. SEARCH LOGIC
 document.getElementById('charSearch').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const filtered = characterLibrary.filter(c => 
-        c.name.toLowerCase().includes(term) || 
-        c.game.toLowerCase().includes(term)
+        c.name.toLowerCase().includes(term) || c.game.toLowerCase().includes(term)
     );
     renderGrid(filtered);
 });
 
-// INITIALIZE
 renderGrid(characterLibrary);
