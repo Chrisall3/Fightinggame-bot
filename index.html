@@ -3,60 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CounterDash | Character Lab</title>
+    <title>CounterDash | Professional Matchup Lab</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <nav class="navbar">
-        <div class="logo">COUNTER<span>DASH</span></div>
-        <div class="search-container">
-            <input type="text" id="charSearch" placeholder="Search character (e.g. Beerus, Ken)...">
-        </div>
-        <div class="auth-section">
-            <span id="userEmail" class="user-label"></span>
-            <button id="authTriggerBtn" class="btn-primary" onclick="openAuth()">Sign In / Up</button>
+        <div class="logo" onclick="navigateTo('dashboard')">COUNTER<span>DASH</span></div>
+        <div class="nav-right">
+            <span id="userGreeting"></span>
+            <button id="navAuthBtn" class="btn-nav" onclick="navigateTo('auth')">Sign In</button>
         </div>
     </nav>
 
-    <header class="hero">
-        <h1>Master the Matchup</h1>
-        <p>Expert-level counterplay data for fighting game enthusiasts.</p>
-    </header>
-
-    <main class="content-wrapper">
-        <div class="character-grid" id="charGrid">
+    <main id="page-dashboard" class="view-container">
+        <header class="hero">
+            <h1>Expert Counterplay</h1>
+            <div class="search-box">
+                <input type="text" id="charSearch" placeholder="Search character (e.g., Beerus)...">
             </div>
+        </header>
+        <div class="character-grid" id="charGrid"></div>
     </main>
 
-    <div id="strategyModal" class="modal-overlay">
-        <div class="modal-card">
-            <span class="close-icon" onclick="closeAllModals()">&times;</span>
-            <div id="strategyContent"></div>
-        </div>
-    </div>
+    <main id="page-auth" class="view-container" style="display: none;">
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <div class="auth-tabs">
+                    <button id="tab-login" class="active" onclick="switchAuthMode('login')">Sign In</button>
+                    <button id="tab-signup" onclick="switchAuthMode('signup')">New Account</button>
+                </div>
 
-    <div id="authModal" class="modal-overlay">
-        <div class="modal-card auth-box">
-            <span class="close-icon" onclick="closeAllModals()">&times;</span>
-            <h2 id="authHeader">Welcome to the Lab</h2>
-            <p>Enter your details to sync your counter-data.</p>
-            
-            <div class="input-group">
-                <label>Email Address</label>
-                <input type="email" id="emailInput" placeholder="challenger@example.com">
+                <div id="auth-form-content">
+                    <h2 id="auth-header">Welcome Back</h2>
+                    
+                    <div class="form-group" id="group-username" style="display:none;">
+                        <label>Username</label>
+                        <input type="text" id="reg-username" placeholder="FighterName77">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="reg-email" placeholder="email@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="reg-password" placeholder="••••••••">
+                    </div>
+
+                    <div class="form-group" id="group-confirm" style="display:none;">
+                        <label>Confirm Password</label>
+                        <input type="password" id="reg-confirm" placeholder="••••••••">
+                    </div>
+
+                    <button id="auth-submit-btn" class="btn-main" onclick="processAuth()">Sign In</button>
+                    <p id="auth-msg"></p>
+                </div>
+                <button class="btn-link" onclick="navigateTo('dashboard')">← Back to Dashboard</button>
             </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="passInput" placeholder="••••••••">
-            </div>
-            
-            <div class="auth-actions">
-                <button onclick="handleSignUp()" class="btn-accent">Sign Up</button>
-                <button onclick="handleSignIn()" class="btn-outline">Sign In</button>
-            </div>
-            <p id="statusMsg" class="status-text"></p>
+        </div>
+    </main>
+
+    <div id="strategyOverlay" class="overlay" onclick="closeStrategy()">
+        <div class="strategy-card" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeStrategy()">&times;</span>
+            <div id="strategyBody"></div>
         </div>
     </div>
 
